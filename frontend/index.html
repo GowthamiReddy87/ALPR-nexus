@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ALPR NEXUS — License Plate Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #040812;
+  --surface:   #070f1f;
+  --surface2:  #0c1829;
+  --border:    #1a2f50;
+  --accent:    #00d4ff;
+  --accent2:   #00ff9d;
+  --warn:      #ffa500;
+  --danger:    #ff3b5c;
+  --text:      #c8e0f4;
+  --muted:     #4a6585;
+  --glow:      0 0 20px rgba(0,212,255,0.35);
+  --glow2:     0 0 20px rgba(0,255,157,0.35);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+/* Grid background */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── HEADER ── */
+header{
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px;
+  background:linear-gradient(90deg,rgba(0,212,255,0.08),transparent);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(8px);
+}
+.logo{display:flex;align-items:center;gap:14px;}
+.logo-icon{
+  width:42px;height:42px;
+  border:2px solid var(--accent);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;
+  color:var(--accent);box-shadow:var(--glow);
+  animation:pulse-border 2s infinite;
+}
+@keyframes pulse-border{
+  0%,100%{box-shadow:0 0 8px rgba(0,212,255,0.4);}
+  50%{box-shadow:0 0 24px rgba(0,212,255,0.8),0 0 48px rgba(0,212,255,0.2);}
+}
+.logo-text h1{
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:18px;
+  color:#fff;letter-spacing:3px;
+}
+.logo-text p{font-size:11px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+.header-stats{display:flex;gap:24px;align-items:center;}
+.hstat{text-align:center;}
+.hstat-val{font-family:'Share Tech Mono',monospace;font-size:22px;color:var(--accent2);}
+.hstat-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;}
+.status-pill{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;
+  background:rgba(0,255,157,0.08);
+  border:1px solid rgba(0,255,157,0.3);
+  border-radius:20px;font-size:12px;color:var(--accent2);
+}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent2);
+  animation:blink 1.2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* ── LAYOUT ── */
+.app{
+  position:relative;z-index:1;
+  display:grid;
+  grid-template-columns:1fr 380px;
+  grid-template-rows:auto 1fr;
+  gap:0;
+  height:calc(100vh - 71px);
+}
+
+/* ── LEFT PANEL ── */
+.left-panel{
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  overflow:hidden;
+}
+
+/* Upload zone */
+.upload-zone{
+  position:relative;
+  margin:20px;
+  border:2px dashed var(--border);
+  border-radius:10px;
+  padding:28px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.3s;
+  background:rgba(0,212,255,0.02);
+  flex-shrink:0;
+}
+.upload-zone:hover,.upload-zone.drag-over{
+  border-color:var(--accent);
+  background:rgba(0,212,255,0.07);
+  box-shadow:inset 0 0 30px rgba(0,212,255,0.05);
+}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:36px;margin-bottom:10px;}
+.upload-text h3{font-size:16px;font-weight:700;color:var(--accent);letter-spacing:1px;}
+.upload-text p{font-size:12px;color:var(--muted);margin-top:4px;}
+.upload-actions{display:flex;gap:10px;justify-content:center;margin-top:14px;position:relative;z-index:2;}
+
+/* Buttons */
+.btn{
+  padding:9px 20px;
+  border:none;border-radius:6px;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;
+  transition:all 0.2s;
+  display:flex;align-items:center;gap:7px;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),#0099cc);
+  color:#000;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,212,255,0.5);}
+.btn-secondary{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text);
+}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-success{background:linear-gradient(135deg,var(--accent2),#00aa6d);color:#000;}
+.btn-success:hover{box-shadow:0 4px 20px rgba(0,255,157,0.4);}
+.btn-danger{background:rgba(255,59,92,0.15);border:1px solid var(--danger);color:var(--danger);}
+.btn-sm{padding:6px 14px;font-size:11px;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+
+/* Preview area */
+.preview-area{
+  flex:1;
+  margin:0 20px 20px;
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:18px;
+  min-height:0;
+}
+.preview-placeholder{text-align:center;color:var(--muted);}
+.preview-placeholder .icon{font-size:48px;margin-bottom:12px;opacity:0.3;}
+.preview-placeholder p{font-size:13px;letter-spacing:1px;}
+#preview-img{
+  width:auto;
+  max-width:100%;
+  max-height:calc(100% - 120px);
+  object-fit:contain;
+  display:none;
+  border-radius:6px;
+}
+.processing-overlay{
+  position:absolute;inset:0;
+  background:rgba(4,8,18,0.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:16px;
+  backdrop-filter:blur(4px);
+}
+.processing-overlay.active{display:flex;}
+.scan-bar{
+  width:200px;height:3px;
+  background:var(--border);border-radius:3px;overflow:hidden;
+}
+.scan-bar-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  animation:scan 1.5s ease-in-out infinite;
+}
+@keyframes scan{
+  0%{width:0%;margin-left:0;}
+  50%{width:60%;margin-left:40%;}
+  100%{width:0%;margin-left:100%;}
+}
+.processing-text{
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;color:var(--accent);letter-spacing:2px;
+}
+
+/* Camera strip */
+.camera-strip{
+  position:absolute;top:10px;right:10px;
+  display:flex;gap:6px;
+}
+.cam-btn{
+  width:32px;height:32px;
+  background:rgba(0,0,0,0.7);
+  border:1px solid var(--border);
+  border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--muted);
+  transition:all 0.2s;
+}
+.cam-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Result card */
+.result-card{
+  position:relative;
+  width:100%;
+  background:rgba(4,8,18,0.95);
+  border:1px solid var(--accent);
+  border-radius:8px;padding:14px 18px;
+  display:none;
+  backdrop-filter:blur(10px);
+  box-shadow:0 20px 50px rgba(0,0,0,0.35), var(--glow);
+  margin-top:14px;
+}
+.result-card.visible{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;}
+.plate-display{
+  font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;
+  color:#fff;letter-spacing:5px;
+  background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(0,255,157,0.12));
+  border:2px solid var(--accent);
+  padding:10px 20px;border-radius:8px;
+  text-shadow:0 0 24px rgba(0,212,255,0.35);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  flex:1 1 240px;
+  min-width:220px;
+  max-width:100%;
+  display:block;
+}
+.result-meta{display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px;}
+.meta-row{
+  display:flex;gap:16px;flex-wrap:wrap;
+}
+.meta-item{font-size:12px;}
+.meta-label{color:var(--muted);letter-spacing:1px;}
+.meta-value{color:var(--accent2);font-weight:700;margin-left:4px;}
+.conf-bar{
+  display:flex;align-items:center;gap:8px;
+}
+.conf-track{
+  flex:1;height:4px;background:var(--border);border-radius:2px;min-width:80px;
+}
+.conf-fill{height:100%;border-radius:2px;transition:width 0.5s ease;}
+
+/* ── RIGHT PANEL ── */
+.right-panel{
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+/* Tabs */
+.tabs{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  flex-shrink:0;
+}
+.tab{
+  padding:14px 20px;
+  font-size:12px;font-weight:700;letter-spacing:1.5px;
+  cursor:pointer;color:var(--muted);
+  border-bottom:2px solid transparent;
+  transition:all 0.2s;
+  flex:1;text-align:center;
+}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;flex:1;overflow:hidden;}
+.tab-content.active{display:flex;flex-direction:column;overflow:hidden;}
+
+/* Log panel */
+.log-header{
+  padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.log-header h3{font-size:13px;letter-spacing:2px;color:var(--muted);}
+.log-list{
+  flex:1;overflow-y:auto;
+  padding:8px;
+}
+.log-list::-webkit-scrollbar{width:4px;}
+.log-list::-webkit-scrollbar-track{background:transparent;}
+.log-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.log-item{
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  margin-bottom:6px;
+  background:var(--surface2);
+  cursor:pointer;
+  transition:all 0.2s;
+  animation:slide-in 0.3s ease;
+}
+@keyframes slide-in{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:none;}}
+.log-item:hover{border-color:var(--accent);background:rgba(0,212,255,0.05);}
+.log-item-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:6px;
+}
+.log-plate{
+  font-family:'Share Tech Mono',monospace;font-size:14px;
+  color:#fff;font-weight:700;letter-spacing:2px;
+}
+.log-conf{
+  font-size:11px;padding:2px 8px;border-radius:10px;
+  font-weight:700;
+}
+.conf-high{background:rgba(0,255,157,0.15);color:var(--accent2);}
+.conf-mid{background:rgba(255,165,0,0.15);color:var(--warn);}
+.conf-low{background:rgba(255,59,92,0.15);color:var(--danger);}
+.log-item-meta{
+  display:flex;gap:12px;flex-wrap:wrap;
+  font-size:11px;color:var(--muted);
+}
+.log-empty{
+  text-align:center;padding:40px 20px;
+  color:var(--muted);font-size:13px;
+}
+
+/* Stats panel */
+.stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;padding:14px;
+}
+.stat-card{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;padding:14px;
+  text-align:center;
+  transition:all 0.3s;
+}
+.stat-card:hover{border-color:var(--accent);}
+.stat-card.accent{border-color:rgba(0,212,255,0.3);}
+.stat-num{
+  font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;
+  color:var(--accent);margin-bottom:4px;
+}
+.stat-num.green{color:var(--accent2);}
+.stat-num.orange{color:var(--warn);}
+.stat-label{font-size:11px;color:var(--muted);letter-spacing:1px;}
+
+/* Bar chart */
+.chart-section{padding:0 14px 14px;}
+.chart-title{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;}
+.bar-chart{display:flex;flex-direction:column;gap:6px;}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:11px;}
+.bar-label{width:70px;text-align:right;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{flex:1;height:14px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.bar-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width 0.5s ease;
+}
+.bar-val{width:30px;color:var(--accent2);text-align:right;}
+
+/* Recent plates */
+.plates-section{padding:0 14px 14px;}
+.plates-title{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;}
+.plates-scroll{
+  display:flex;flex-wrap:wrap;gap:6px;
+  max-height:100px;overflow-y:auto;
+}
+.mini-plate{
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  padding:4px 10px;border-radius:4px;
+  background:rgba(0,212,255,0.08);
+  border:1px solid rgba(0,212,255,0.2);
+  color:var(--accent);
+  white-space:nowrap;
+}
+
+/* Live feed panel */
+.live-panel{
+  padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;
+}
+.live-header{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--danger);letter-spacing:1px;
+  padding:4px 10px;border-radius:10px;
+  background:rgba(255,59,92,0.1);border:1px solid rgba(255,59,92,0.3);
+}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);animation:blink 0.8s infinite;}
+
+.terminal{
+  background:rgba(0,0,0,0.5);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  line-height:1.8;
+  height:220px;
+  overflow-y:auto;
+  flex-shrink:0;
+}
+.terminal::-webkit-scrollbar{width:3px;}
+.terminal::-webkit-scrollbar-thumb{background:var(--border);}
+.t-green{color:var(--accent2);}
+.t-blue{color:var(--accent);}
+.t-orange{color:var(--warn);}
+.t-red{color:var(--danger);}
+.t-muted{color:var(--muted);}
+
+/* Simulate controls */
+.sim-controls{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  padding:0 14px;flex-shrink:0;
+}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--surface2);
+  border:1px solid var(--accent);
+  border-radius:8px;padding:12px 24px;
+  font-size:13px;color:var(--accent);letter-spacing:1px;
+  box-shadow:var(--glow);
+  opacity:0;transition:opacity 0.3s;
+  z-index:1000;pointer-events:none;
+  white-space:nowrap;
+}
+#toast.show{opacity:1;}
+
+/* Video feed overlay */
+#video-container{
+  position:absolute;inset:0;
+  display:none;
+  background:#000;
+  border-radius:10px;overflow:hidden;
+}
+#video-container.active{display:block;}
+#video-feed{width:100%;height:100%;object-fit:cover;}
+#canvas-overlay{position:absolute;inset:0;pointer-events:none;}
+
+/* Mobile responsive */
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;}
+  .right-panel{max-height:45vh;}
+  header{padding:10px 16px;}
+  .header-stats{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔍</div>
+    <div class="logo-text">
+      <h1>ALPR NEXUS</h1>
+      <p>VEHICLE INTELLIGENCE PLATFORM</p>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-val" id="hstat-total">0</div>
+      <div class="hstat-lbl">TOTAL READS</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="hstat-conf">—</div>
+      <div class="hstat-lbl">AVG CONF</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-val" id="hstat-uptime">00:00</div>
+      <div class="hstat-lbl">UPTIME</div>
+    </div>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot" id="server-dot" style="background:var(--warn)"></div>
+    <span id="server-status">CONNECTING...</span>
+  </div>
+</header>
+
+<!-- MAIN APP -->
+<div class="app">
+
+  <!-- LEFT: Detection Area -->
+  <div class="left-panel">
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept="image/*,video/*" multiple/>
+      <div class="upload-icon">📁</div>
+      <div class="upload-text">
+        <h3>DROP IMAGE/VIDEO / CLICK TO UPLOAD</h3>
+        <p>JPEG · PNG · BMP · TIFF · MP4 · AVI — max 50MB</p>
+      </div>
+      <div class="upload-actions">
+        <button class="btn btn-primary" id="detect-btn" disabled>
+          🔍 DETECT PLATES
+        </button>
+        <button class="btn btn-secondary" id="video-btn">
+          🎥 PROCESS VIDEO
+        </button>
+        <button class="btn btn-secondary" id="camera-btn">
+          📷 CAMERA
+        </button>
+        <button class="btn btn-secondary" id="clear-btn">
+          🗑 CLEAR
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-area" id="preview-area">
+      <!-- Video feed (camera mode) -->
+      <div id="video-container">
+        <video id="video-feed" autoplay playsinline muted></video>
+        <canvas id="canvas-overlay"></canvas>
+      </div>
+
+      <!-- Image preview -->
+      <div class="preview-placeholder" id="placeholder">
+        <div class="icon">🚗</div>
+        <p>UPLOAD AN IMAGE OR USE CAMERA</p>
+        <p style="margin-top:8px;font-size:11px;">Supports night, motion blur, glare, occlusion</p>
+      </div>
+      <img id="preview-img" alt="Preview"/>
+
+      <!-- Camera controls -->
+      <div class="camera-strip" id="cam-strip" style="display:none;">
+        <div class="cam-btn" id="snap-btn" title="Capture">📸</div>
+        <div class="cam-btn" id="stop-cam-btn" title="Stop">⏹</div>
+      </div>
+
+      <!-- Processing overlay -->
+      <div class="processing-overlay" id="proc-overlay">
+        <div style="font-size:32px;">🔎</div>
+        <div class="processing-text" id="proc-text">INITIALIZING DETECTION...</div>
+        <div class="scan-bar"><div class="scan-bar-fill"></div></div>
+        <div style="font-size:11px;color:var(--muted)" id="proc-sub">Running plate localization</div>
+      </div>
+
+      <!-- Result overlay -->
+      <div class="result-card" id="result-card">
+        <div class="plate-display" id="plate-display">——</div>
+        <div class="result-meta" id="result-meta">
+          <div class="meta-row" id="meta-row-1"></div>
+          <div class="conf-bar">
+            <span class="meta-label" style="font-size:11px;">CONF</span>
+            <div class="conf-track">
+              <div class="conf-fill" id="conf-fill" style="width:0%"></div>
+            </div>
+            <span class="meta-value" id="conf-pct">0%</span>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-secondary" id="close-result">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Panels -->
+  <div class="right-panel">
+    <div class="tabs">
+      <div class="tab active" data-tab="log">📋 LOG</div>
+      <div class="tab" data-tab="stats">📊 STATS</div>
+      <div class="tab" data-tab="live">⚡ LIVE</div>
+    </div>
+
+    <!-- LOG TAB -->
+    <div class="tab-content active" id="tab-log">
+      <div class="log-header">
+        <h3>DETECTION LOG</h3>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-secondary" id="export-btn">⬇ EXPORT</button>
+          <button class="btn btn-sm btn-danger" id="clear-log-btn">CLEAR</button>
+        </div>
+      </div>
+      <div class="log-list" id="log-list">
+        <div class="log-empty" id="log-empty">No detections yet.<br/>Upload an image to begin.</div>
+      </div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div class="tab-content" id="tab-stats">
+      <div class="stats-grid">
+        <div class="stat-card accent">
+          <div class="stat-num" id="s-total">0</div>
+          <div class="stat-label">TOTAL DETECTIONS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num green" id="s-conf">—</div>
+          <div class="stat-label">AVG CONFIDENCE</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num orange" id="s-unique">0</div>
+          <div class="stat-label">UNIQUE PLATES</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="s-quality">—</div>
+          <div class="stat-label">LAST QUALITY</div>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <div class="chart-title">LIGHTING CONDITIONS</div>
+        <div class="bar-chart" id="lighting-chart">
+          <div style="font-size:11px;color:var(--muted);">No data yet.</div>
+        </div>
+      </div>
+
+      <div class="plates-section">
+        <div class="plates-title">RECENT PLATES</div>
+        <div class="plates-scroll" id="recent-plates">
+          <span style="font-size:11px;color:var(--muted);">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE TAB -->
+    <div class="tab-content" id="tab-live">
+      <div class="live-panel">
+        <div class="live-header">
+          <h3 style="font-size:12px;letter-spacing:2px;color:var(--muted);">SYSTEM TERMINAL</h3>
+          <div class="live-badge">
+            <div class="live-dot"></div> LIVE
+          </div>
+        </div>
+        <div class="terminal" id="terminal"></div>
+        <div style="padding:0;flex-shrink:0;">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">SIMULATE DETECTION</div>
+          <div class="sim-controls">
+            <button class="btn btn-success btn-sm" id="sim-day">☀ DAYTIME</button>
+            <button class="btn btn-secondary btn-sm" id="sim-night">🌙 NIGHTTIME</button>
+            <button class="btn btn-secondary btn-sm" id="sim-blur">💨 MOTION BLUR</button>
+            <button class="btn btn-secondary btn-sm" id="sim-rain">🌧 RAIN/GLARE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── CONFIG ───
+const API = 'http://localhost:5050/api';
+let currentImageB64 = null;
+let cameraStream = null;
+let captureInterval = null;
+let frameBuffer = [];
+const MAX_BUFFER_SIZE = 10; // Send every 10 frames
+let sessionStart = Date.now();
+let detectionCount = 0;
+
+// ─── UPTIME COUNTER ───
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
+  const s = String(elapsed % 60).padStart(2,'0');
+  document.getElementById('hstat-uptime').textContent = `${m}:${s}`;
+}, 1000);
+
+// ─── SERVER HEALTH CHECK ───
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`, {signal: AbortSignal.timeout(3000)});
+    const d = await r.json();
+    document.getElementById('server-dot').style.background = 'var(--accent2)';
+    document.getElementById('server-status').textContent = 'ONLINE';
+    termLog(`<span class="t-green">[SYS]</span> Backend connected — ALPR Engine v${d.version}`);
+  } catch(e) {
+    document.getElementById('server-dot').style.background = 'var(--danger)';
+    document.getElementById('server-status').textContent = 'OFFLINE';
+    termLog(`<span class="t-red">[ERR]</span> Backend unreachable — start server on :5050`);
+  }
+}
+
+// ─── TABS ───
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-' + t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'stats') refreshStats();
+  });
+});
+
+// ─── FILE UPLOAD ───
+const fileInput = document.getElementById('file-input');
+const uploadZone = document.getElementById('upload-zone');
+const detectBtn = document.getElementById('detect-btn');
+const clearBtn = document.getElementById('clear-btn');
+const previewImg = document.getElementById('preview-img');
+const placeholder = document.getElementById('placeholder');
+
+uploadZone.addEventListener('dragover', e => {
+  e.preventDefault(); uploadZone.classList.add('drag-over');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+});
+
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) loadFile(e.target.files[0]);
+});
+
+const videoBtn = document.getElementById('video-btn');
+videoBtn.addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'video/*';
+  input.onchange = e => {
+    if (e.target.files.length) loadVideoFile(e.target.files[0]);
+  };
+  input.click();
+});
+
+function loadFile(file) {
+  const isVideoType = file.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm)$/i.test(file.name);
+  if (file.type.startsWith('image/')) {
+    loadImageFile(file);
+  } else if (isVideoType) {
+    loadVideoFile(file);
+  } else {
+    showToast('Please upload an image or video file');
+  }
+}
+
+function loadImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentImageB64 = ev.target.result;
+    previewImg.src = ev.target.result;
+    previewImg.style.display = 'block';
+    placeholder.style.display = 'none';
+    detectBtn.disabled = false;
+    document.getElementById('result-card').classList.remove('visible');
+    termLog(`<span class="t-blue">[IMG]</span> Loaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function loadVideoFile(file) {
+  const formData = new FormData();
+  formData.append('video', file);
+
+  termLog(`<span class="t-blue">[VIDEO]</span> Processing: ${file.name} (${(file.size/1024/1024).toFixed(1)} MB)`);
+
+  try {
+    const response = await fetch(`${API}/video`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      showToast('❌ Video upload failed');
+      termLog(`<span class="t-red">[ERR]</span> Video upload failed: ${response.status} ${response.statusText}`);
+      termLog(`<span class="t-red">[ERR]</span> ${text}`);
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      detectionCount += data.detections.length;
+      document.getElementById('hstat-total').textContent = detectionCount;
+
+      if (data.detections.length > 0) {
+        addToLog(data.detections);
+        termLog(`<span class="t-green">[VIDEO]</span> ${data.detections.length} plate(s) detected from ${data.total_frames} frames`);
+        if (data.video_stats) {
+          termLog(`<span class="t-muted">[STATS]</span> Night: ${data.video_stats.night_percentage}% | Blur: ${data.video_stats.blur_percentage}%`);
+        }
+        showToast(`✅ Video processed: ${data.detections.length} plates found!`);
+      } else {
+        termLog(`<span class="t-orange">[VIDEO]</span> No plates detected in ${data.total_frames} frames`);
+        showToast('⚠ No plates detected in video');
+      }
+    } else {
+      showToast('❌ Video processing failed');
+      termLog(`<span class="t-red">[ERR]</span> Video processing error: ${data.error || 'Unknown'}`);
+    }
+  } catch(e) {
+    showToast('❌ Cannot process video');
+    termLog(`<span class="t-red">[ERR]</span> Video upload error: ${e.message}`);
+  }
+}
+
+clearBtn.addEventListener('click', () => {
+  currentImageB64 = null;
+  previewImg.src = '';
+  previewImg.style.display = 'none';
+  placeholder.style.display = 'block';
+  detectBtn.disabled = true;
+  document.getElementById('result-card').classList.remove('visible');
+  fileInput.value = '';
+});
+
+// ─── DETECT ───
+detectBtn.addEventListener('click', async () => {
+  if (!currentImageB64) return;
+  await runDetection(currentImageB64);
+});
+
+async function runDetection(imageB64) {
+  const overlay = document.getElementById('proc-overlay');
+  const procText = document.getElementById('proc-text');
+  const procSub = document.getElementById('proc-sub');
+  const steps = [
+    ['PREPROCESSING IMAGE...', 'Applying CLAHE + denoise'],
+    ['DETECTING PLATE REGIONS...', 'Running contour analysis'],
+    ['DESKEWING & NORMALIZING...', 'Correcting perspective'],
+    ['RUNNING OCR ENGINE...', 'Character segmentation'],
+    ['FINALIZING RESULTS...', 'Confidence scoring']
+  ];
+
+  overlay.classList.add('active');
+  for (let i = 0; i < steps.length; i++) {
+    procText.textContent = steps[i][0];
+    procSub.textContent = steps[i][1];
+    await sleep(280 + Math.random() * 200);
+  }
+
+  try {
+    const res = await fetch(`${API}/detect`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({image: imageB64})
+    });
+    const data = await res.json();
+    overlay.classList.remove('active');
+
+    if (data.success && data.detections.length > 0) {
+      // Show annotated image
+      if (data.annotated_image) {
+        previewImg.src = data.annotated_image;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+      }
+      showTopResult(data.detections[0]);
+      addToLog(data.detections);
+      detectionCount += data.detections.length;
+      document.getElementById('hstat-total').textContent = detectionCount;
+      termLog(`<span class="t-green">[DET]</span> ${data.detections.length} plate(s) — ${data.processing_time_ms}ms`);
+      data.detections.forEach(d => {
+        const c = confClass(d.confidence);
+        termLog(`  <span class="t-blue">▸</span> <b>${d.plate_number}</b> [${(d.confidence*100).toFixed(1)}%] ${d.lighting_condition}`);
+      });
+      showToast(`✅ ${data.detections.length} plate(s) detected!`);
+    } else if (data.detections && data.detections.length === 0) {
+      overlay.classList.remove('active');
+      showToast('⚠ No plates detected — try a clearer image');
+      termLog(`<span class="t-orange">[WARN]</span> No plates found in frame`);
+    } else {
+      overlay.classList.remove('active');
+      showToast('❌ Detection error: ' + (data.error || 'Unknown'));
+      termLog(`<span class="t-red">[ERR]</span> ${data.error}`);
+    }
+  } catch(e) {
+    overlay.classList.remove('active');
+    showToast('❌ Cannot connect to backend server');
+    termLog(`<span class="t-red">[ERR]</span> Network error: ${e.message}`);
+  }
+}
+
+function showTopResult(det) {
+  const card = document.getElementById('result-card');
+  const plateText = (det.plate_number || 'UNKNOWN').toString().trim().toUpperCase() || 'UNKNOWN';
+  document.getElementById('plate-display').textContent = plateText;
+  
+  const conf = Math.round((det.confidence || 0) * 100);
+  const fill = document.getElementById('conf-fill');
+  fill.style.width = conf + '%';
+  fill.style.background = conf > 85 ? 'var(--accent2)' : conf > 70 ? 'var(--warn)' : 'var(--danger)';
+  document.getElementById('conf-pct').textContent = conf + '%';
+  
+  const laneText = det.lane || '—';
+  const speedText = det.vehicle_speed || '—';
+  const lightText = det.lighting_condition || 'Unknown';
+  const qualityText = det.image_quality || 'Unknown';
+
+  document.getElementById('meta-row-1').innerHTML = `
+    <span class="meta-item"><span class="meta-label">LANE</span><span class="meta-value">${laneText}</span></span>
+    <span class="meta-item"><span class="meta-label">SPEED</span><span class="meta-value">${speedText}</span></span>
+    <span class="meta-item"><span class="meta-label">LIGHT</span><span class="meta-value">${lightText}</span></span>
+    <span class="meta-item"><span class="meta-label">QUALITY</span><span class="meta-value">${qualityText}</span></span>
+  `;
+  if (det.blur_score !== undefined || det.brightness !== undefined) {
+    document.getElementById('meta-row-1').innerHTML += `
+      <span class="meta-item"><span class="meta-label">BLUR</span><span class="meta-value">${det.blur_score !== undefined ? det.blur_score : '—'}</span></span>
+      <span class="meta-item"><span class="meta-label">BRIGHT</span><span class="meta-value">${det.brightness !== undefined ? det.brightness : '—'}</span></span>
+    `;
+  }
+  card.classList.add('visible');
+  
+  // Update header conf
+  document.getElementById('hstat-conf').textContent = conf + '%';
+}
+
+document.getElementById('close-result').addEventListener('click', () => {
+  document.getElementById('result-card').classList.remove('visible');
+});
+
+// ─── LOG ───
+function addToLog(detections) {
+  const list = document.getElementById('log-list');
+  document.getElementById('log-empty').style.display = 'none';
+  
+  detections.forEach(det => {
+    const el = document.createElement('div');
+    el.className = 'log-item';
+    const cl = confClass(det.confidence);
+    const time = new Date(det.timestamp).toLocaleTimeString();
+    el.innerHTML = `
+      <div class="log-item-header">
+        <span class="log-plate">${det.plate_number}</span>
+        <span class="log-conf ${cl}">${(det.confidence*100).toFixed(1)}%</span>
+      </div>
+      <div class="log-item-meta">
+        <span>🕐 ${time}</span>
+        <span>📍 ${det.region || '—'}</span>
+        <span>🚦 ${det.lane}</span>
+        <span>⚡ ${det.vehicle_speed}</span>
+        <span>💡 ${det.lighting_condition}</span>
+        <span>📊 ${det.blur_score !== undefined ? `Blur: ${det.blur_score}` : ''}</span>
+      </div>
+    `;
+    el.addEventListener('click', () => showToast(`Plate: ${det.plate_number}`));
+    list.insertBefore(el, list.firstChild);
+  });
+}
+
+function confClass(c) {
+  if (c >= 0.85) return 'conf-high';
+  if (c >= 0.70) return 'conf-mid';
+  return 'conf-low';
+}
+
+// ─── EXPORT LOG ───
+document.getElementById('export-btn').addEventListener('click', async () => {
+  try {
+    const r = await fetch(`${API}/logs?limit=500`);
+    const data = await r.json();
+    const csv = ['ID,Plate,Confidence,Timestamp,Lane,Speed,Lighting,Quality']
+      .concat(data.logs.map(d =>
+        `${d.id},${d.plate_number},${d.confidence},${d.timestamp},${d.lane},${d.vehicle_speed},${d.lighting_condition},${d.image_quality}`
+      )).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `alpr_log_${Date.now()}.csv`;
+    a.click();
+    showToast('📥 Log exported as CSV');
+  } catch(e) { showToast('❌ Export failed'); }
+});
+
+// ─── CLEAR LOG ───
+document.getElementById('clear-log-btn').addEventListener('click', async () => {
+  try {
+    await fetch(`${API}/logs/clear`, {method:'POST'});
+    document.getElementById('log-list').innerHTML =
+      '<div class="log-empty" id="log-empty">Log cleared.</div>';
+    showToast('🗑 Log cleared');
+  } catch(e) { showToast('❌ Clear failed'); }
+});
+
+// ─── STATS ───
+async function refreshStats() {
+  try {
+    const r = await fetch(`${API}/stats`);
+    const d = await r.json();
+    document.getElementById('s-total').textContent = d.total_detections;
+    document.getElementById('s-conf').textContent = d.total_detections ? (d.avg_confidence*100).toFixed(1)+'%' : '—';
+    document.getElementById('s-unique').textContent = d.unique_plates || 0;
+    document.getElementById('hstat-conf').textContent = d.total_detections ? (d.avg_confidence*100).toFixed(1)+'%' : '—';
+    document.getElementById('hstat-total').textContent = d.total_detections;
+
+    // Lighting chart
+    const chart = document.getElementById('lighting-chart');
+    if (d.lighting_breakdown && Object.keys(d.lighting_breakdown).length) {
+      const max = Math.max(...Object.values(d.lighting_breakdown));
+      chart.innerHTML = Object.entries(d.lighting_breakdown)
+        .sort((a,b) => b[1]-a[1])
+        .map(([k,v]) => `
+          <div class="bar-row">
+            <div class="bar-label">${k}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(v/max*100).toFixed(0)}%"></div>
+            </div>
+            <div class="bar-val">${v}</div>
+          </div>`).join('');
+    }
+
+    // Recent plates
+    if (d.recent_plates && d.recent_plates.length) {
+      document.getElementById('recent-plates').innerHTML =
+        d.recent_plates.map(p => `<span class="mini-plate">${p}</span>`).join('');
+    }
+  } catch(e) {}
+}
+
+// ─── CAMERA ───
+document.getElementById('camera-btn').addEventListener('click', async () => {
+  if (cameraStream) return;
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
+    const video = document.getElementById('video-feed');
+    video.srcObject = cameraStream;
+    document.getElementById('video-container').classList.add('active');
+    document.getElementById('cam-strip').style.display = 'flex';
+    placeholder.style.display = 'none';
+    frameBuffer = [];
+    termLog(`<span class="t-green">[CAM]</span> Camera activated`);
+    
+    // Auto-capture every 3 seconds
+    captureInterval = setInterval(() => captureFrame(), 3000);
+  } catch(e) {
+    showToast('❌ Camera access denied: ' + e.message);
+  }
+});
+
+document.getElementById('snap-btn').addEventListener('click', captureFrame);
+
+async function captureFrame() {
+  if (!cameraStream) return;
+  const video = document.getElementById('video-feed');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const b64 = canvas.toDataURL('image/jpeg', 0.9);
+  
+  frameBuffer.push(b64);
+  termLog(`<span class="t-blue">[CAP]</span> Frame captured (${canvas.width}×${canvas.height}) — Buffer: ${frameBuffer.length}/${MAX_BUFFER_SIZE}`);
+  
+  if (frameBuffer.length >= MAX_BUFFER_SIZE) {
+    await processFrameBuffer();
+  }
+}
+
+async function processFrameBuffer() {
+  if (frameBuffer.length === 0) return;
+  
+  try {
+    const response = await fetch(`${API}/video/stream`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({frames: frameBuffer})
+    });
+    const data = await response.json();
+    
+    if (data.success) {
+      if (data.detections && data.detections.length > 0) {
+        detectionCount += data.detections.length;
+        document.getElementById('hstat-total').textContent = detectionCount;
+        addToLog(data.detections);
+        termLog(`<span class="t-green">[STREAM]</span> ${data.detections.length} plate(s) from ${frameBuffer.length} frames`);
+        if (data.stats) {
+          termLog(`<span class="t-muted">[STATS]</span> Night: ${data.stats.night_percentage}% | Blur: ${data.stats.blur_percentage}% | Avg Bright: ${data.stats.avg_brightness}`);
+        }
+        showToast(`✅ Stream processed: ${data.detections.length} plates!`);
+      }
+    } else {
+      termLog(`<span class="t-red">[ERR]</span> Stream processing failed`);
+    }
+  } catch(e) {
+    termLog(`<span class="t-red">[ERR]</span> Stream error: ${e.message}`);
+  }
+  
+  frameBuffer = []; // Clear buffer
+}
+
+document.getElementById('stop-cam-btn').addEventListener('click', stopCamera);
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  if (captureInterval) { clearInterval(captureInterval); captureInterval = null; }
+  document.getElementById('video-container').classList.remove('active');
+  document.getElementById('cam-strip').style.display = 'none';
+  frameBuffer = []; // Clear buffer
+  termLog(`<span class="t-orange">[CAM]</span> Camera stopped`);
+}
+
+// ─── SIMULATE ───
+const simMap = {
+  'sim-day':   {condition:'daytime'},
+  'sim-night': {condition:'nighttime'},
+  'sim-blur':  {condition:'motion blur'},
+  'sim-rain':  {condition:'rain/glare'}
+};
+
+Object.entries(simMap).forEach(([id, opts]) => {
+  document.getElementById(id).addEventListener('click', async () => {
+    try {
+      const r = await fetch(`${API}/simulate`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(opts)
+      });
+      const d = await r.json();
+      if (d.success) {
+        const det = d.detection;
+        addToLog([det]);
+        detectionCount++;
+        document.getElementById('hstat-total').textContent = detectionCount;
+        const cl = confClass(det.confidence);
+        termLog(`<span class="t-green">[SIM]</span> ${opts.condition.toUpperCase()} — <b>${det.plate_number}</b> [${(det.confidence*100).toFixed(1)}%]`);
+        showToast(`🎯 Simulated: ${det.plate_number}`);
+      }
+    } catch(e) { showToast('❌ Simulation failed'); }
+  });
+});
+
+// ─── TERMINAL ───
+function termLog(html) {
+  const t = document.getElementById('terminal');
+  const time = new Date().toLocaleTimeString('en-GB',{hour12:false});
+  t.innerHTML += `<div><span class="t-muted">[${time}]</span> ${html}</div>`;
+  t.scrollTop = t.scrollHeight;
+  // Keep last 200 lines
+  const lines = t.querySelectorAll('div');
+  if (lines.length > 200) lines[0].remove();
+}
+
+// ─── TOAST ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── UTILS ───
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ─── INIT ───
+termLog(`<span class="t-blue">[SYS]</span> ALPR NEXUS v2.0 initializing...`);
+termLog(`<span class="t-muted">[SYS]</span> OpenCV ${navigator.userAgent.includes('Chrome') ? '4.x' : '4.x'} engine ready`);
+termLog(`<span class="t-muted">[SYS]</span> Multi-stage detection pipeline loaded`);
+checkHealth();
+
+// Periodic stats refresh
+setInterval(refreshStats, 10000);
+refreshStats();
+
+// Periodic health check
+setInterval(checkHealth, 30000);
+</script>
+</body>
+</html>
