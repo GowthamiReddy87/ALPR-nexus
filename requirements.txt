@@ -5,3 +5,4 @@ pillow
 ultralytics
 easyocr
 flask-cors
+gunicorn
